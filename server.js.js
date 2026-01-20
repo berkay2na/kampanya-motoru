@@ -112,6 +112,9 @@ app.post('/api/calculate', (req, res) => {
     res.json({ rawTotal, ...bestOffer });
 });
 
-app.listen(3000, () => {
-    console.log("🚀 SİSTEM HAZIR! http://localhost:3000 adresine git");
+// PORT AYARI: Sunucu bir port verirse onu kullan, vermezse 3000 kullan.
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+    console.log(`🚀 SİSTEM ÇALIŞIYOR: Port ${PORT}`);
 });
