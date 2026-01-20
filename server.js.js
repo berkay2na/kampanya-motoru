@@ -1,34 +1,77 @@
 const express = require('express');
-const app = express();
+const mongoose = require('mongoose'); // Yeni ekledik
 const path = require('path');
+const app = express();
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- VERİTABANI ---
-let products = [
-    { id: 101, name: "Filtre Kahve", price: 60, category: "Kahve" },
-    { id: 201, name: "Cheesecake", price: 90, category: "Tatli" }
-];
+// --- 1. MONGODB BAĞLANTISI ---
+// Buradaki linki kendi Atlas linkinle değiştir!
+const mongoURI = "mongodb+srv://berkayfm72:<TSWveDdH6EN8dwQb>@cluster0.m1xbymq.mongodb.net/?appName=Cluster0";
 
-let campaigns = [];
+mongoose.connect(mongoURI)
+    .then(() => console.log("🚀 MongoDB Atlas Bağlantısı Başarılı!"))
+    .catch(err => console.log("❌ MongoDB Bağlantı Hatası:", err));
 
-// --- API ---
-app.get('/api/products', (req, res) => res.json(products));
-app.post('/api/products', (req, res) => {
-    const newProduct = { ...req.body, id: Date.now() };
-    products.push(newProduct);
-    console.log(`➕ Yeni Ürün Eklendi: ${newProduct.name} (${newProduct.price} TL)`);
-    res.json({ message: "Ürün Eklendi", product: newProduct });
+// --- 2. VERİ MODELLERİ (ŞEMALAR) ---
+// Artık 'let products = []' yerine bunları kullanıyoruz
+const Product = mongoose.model('Product', {
+    name: String,
+    price: Number,
+    category: String,
+    id: Number
 });
 
-app.get('/api/campaigns', (req, res) => res.json(campaigns));
-app.post('/api/campaigns', (req, res) => {
-    const newCampaign = { ...req.body, id: Date.now() };
-    campaigns.push(newCampaign);
-    console.log(`📝 Yeni Kampanya Tanımlandı: ${newCampaign.name}`);
-    res.json({ message: "Kampanya Tanımlandı", campaign: newCampaign });
+const Campaign = mongoose.model('Campaign', {
+    name: String,
+    type: String,
+    targetProductId: Number,
+    buyCount: Number,
+    payCount: Number,
+    category1: String,
+    category2: String,
+    discountAmount: Number,
+    percent: Number,
+    id: Number
 });
+
+// --- 3. API ENDPOINTLERİ ---
+
+// Ürünleri Getir
+app.get('/api/products', async (req, res) => {
+    const products = await Product.find(); 
+    res.json(products);
+});
+
+// Yeni Ürün Ekle
+app.post('/api/products', async (req, res) => {
+    const newProduct = new Product({ ...req.body, id: Date.now() });
+    await newProduct.save();
+    console.log(`➕ Veritabanına Kaydedildi: ${newProduct.name}`);
+    res.json({ message: "Ürün Kaydedildi", product: newProduct });
+});
+
+// Kampanyaları Getir
+app.get('/api/campaigns', async (req, res) => {
+    const campaigns = await Campaign.find();
+    res.json(campaigns);
+});
+
+// Yeni Kampanya Ekle
+app.post('/api/campaigns', async (req, res) => {
+    const newCampaign = new Campaign({ ...req.body, id: Date.now() });
+    await newCampaign.save();
+    res.json({ message: "Kampanya Kaydedildi", campaign: newCampaign });
+});
+
+// --- 4. HESAPLAMA MOTORU (Calculate) ---
+// Bu kısmın başına 'async' eklemeyi unutma!
+app.post('/api/calculate', async (req, res) => {
+    const productsDB = await Product.find();
+    const campaignsDB = await Campaign.find();
+    
+    // ... geri kalan hesaplama kodları (içeride 'products' yerine 'productsDB' kullanacağız)
 
 // --- HESAPLAMA MOTORU ---
 app.post('/api/calculate', (req, res) => {
