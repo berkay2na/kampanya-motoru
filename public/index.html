@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Perakende Yönetim Paneli</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; padding-top: 20px; }
+        .nav-tabs .nav-link.active { background-color: #fff; border-bottom-color: transparent; font-weight: bold; color: #0d6efd; }
+        .nav-tabs .nav-link { color: #495057; }
+        .card { border: none; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); margin-top: 20px; }
+        .status-badge { font-size: 0.8em; padding: 5px 10px; border-radius: 20px; background-color: #d1e7dd; color: #0f5132; }
+        .table img { width: 40px; height: 40px; border-radius: 5px; object-fit: cover; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h3 class="mb-4 text-primary">🛍️ Perakende Kampanya Motoru v2.0</h3>
+
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="products-tab" data-bs-toggle="tab" data-bs-target="#products-pane" type="button">📦 Ürün Yönetimi</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="campaigns-tab" data-bs-toggle="tab" data-bs-target="#campaigns-pane" type="button">🏷️ Kampanyalar</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="pos-tab" data-bs-toggle="tab" data-bs-target="#pos-pane" type="button">🖥️ Kasa (POS) Simülasyonu</button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="myTabContent">
+        
+        <div class="tab-pane fade show active" id="products-pane">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card p-3">
+                        <h5 class="card-title">Yeni Ürün Ekle</h5>
+                        <hr>
+                        <input type="text" id="pName" class="form-control mb-2" placeholder="Ürün Adı (Örn: Iced Latte)">
+                        <input type="number" id="pPrice" class="form-control mb-2" placeholder="Fiyat (TL)">
+                        <select id="pCat" class="form-control mb-2">
+                            <option value="Kahve">Kahve</option>
+                            <option value="Tatli">Tatlı</option>
+                            <option value="Yiyecek">Yiyecek</option>
+                            <option value="Diger">Diğer</option>
+                        </select>
+                        <button onclick="addProduct()" class="btn btn-primary w-100">Kaydet</button>
+                    </div>
+                </div>
+                
+                <div class="col-md-8">
+                    <div class="card p-3">
+                        <h5 class="card-title">Ürün Listesi</h5>
+                        <table class="table table-hover mt-3">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Ürün Adı</th>
+                                    <th>Kategori</th>
+                                    <th>Fiyat</th>
+                                    <th>Durum</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productTableBody">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="campaigns-pane">
+            <div class="row">
+                <div class="col-md-5">
+                    <div class="card p-3">
+                        <h5 class="card-title">Kural Tanımla</h5>
+                        <hr>
+                        <input type="text" id="cName" class="form-control mb-2" placeholder="Kampanya Adı">
+                        <select id="cType" class="form-control mb-2" onchange="toggleCampaignInputs()">
+                            <option value="">Kampanya Tipi Seçin...</option>
+                            <option value="X_AL_Y_ODE">3 Al 2 Öde</option>
+                            <option value="BUNDLE">Kahve + Tatlı İndirimi</option>
+                            <option value="PERCENTAGE">Yüzde İndirim (%)</option>
+                        </select>
+
+                        <div id="inputs-x-al-y-ode" class="bg-light p-2 mb-2 rounded" style="display:none">
+                            <select id="targetProd1" class="form-control mb-2 product-select"></select>
+                            <div class="d-flex gap-2">
+                                <input type="number" id="buyCount" placeholder="Alınan (3)" class="form-control">
+                                <input type="number" id="payCount" placeholder="Ödenen (2)" class="form-control">
+                            </div>
+                        </div>
+
+                        <div id="inputs-bundle" class="bg-light p-2 mb-2 rounded" style="display:none">
+                            <select id="cat1" class="form-control mb-1"><option value="Kahve">Kahve</option></select>
+                            <select id="cat2" class="form-control mb-1"><option value="Tatli">Tatlı</option></select>
+                            <input type="number" id="bundleDiscount" placeholder="İndirim (TL)" class="form-control">
+                        </div>
+
+                        <div id="inputs-percentage" class="bg-light p-2 mb-2 rounded" style="display:none">
+                            <select id="targetProd2" class="form-control mb-2 product-select"></select>
+                            <input type="number" id="percentVal" placeholder="%" class="form-control">
+                        </div>
+
+                        <button onclick="addCampaign()" class="btn btn-success w-100 mt-2">Kuralı Oluştur</button>
+                    </div>
+                </div>
+                
+                <div class="col-md-7">
+                    <div class="card p-3">
+                        <h5 class="card-title">Aktif Kampanyalar</h5>
+                        <ul id="activeCampaigns" class="list-group list-group-flush mt-3"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="pos-pane">
+            <div class="row">
+                <div class="col-md-7">
+                    <div class="card p-3">
+                        <h5 class="card-title">Kasa İşlemleri</h5>
+                        <div class="d-flex gap-2 mb-3">
+                            <select id="posProduct" class="form-control product-select"></select>
+                            <input type="number" id="posQty" class="form-control" value="1" style="width: 80px">
+                            <button onclick="addToCart()" class="btn btn-dark">Ekle</button>
+                        </div>
+                        <hr>
+                        <h6>Sepet:</h6>
+                        <ul id="cartList" class="list-group mb-3"></ul>
+                    </div>
+                </div>
+
+                <div class="col-md-5">
+                    <div class="card p-3 bg-dark text-white">
+                        <h3 class="text-center">Fiş Özeti</h3>
+                        <hr style="border-color: white;">
+                        <div id="resultArea" style="display:none;">
+                            <div class="d-flex justify-content-between"><span>Ara Toplam:</span> <span id="resRaw">0</span> TL</div>
+                            <div class="d-flex justify-content-between text-warning"><span>Kampanya:</span> <small id="resCamp">Yok</small></div>
+                            <div class="d-flex justify-content-between text-success"><span>İndirim:</span> -<span id="resDisc">0</span> TL</div>
+                            <hr style="border-color: white;">
+                            <h2 class="text-center text-warning"><span id="resFinal">0</span> TL</h2>
+                        </div>
+                        <button onclick="calculate()" class="btn btn-warning w-100 fw-bold mt-3">HESAPLA & ÖDE</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let cart = [];
+
+    window.onload = async () => {
+        await loadProducts();
+        await loadCampaigns();
+    };
+
+    // 1. ÜRÜN YÖNETİMİ
+    async function loadProducts() {
+        const res = await fetch('/api/products');
+        const products = await res.json();
+        
+        // A) Tabloyu Doldur
+        const tableBody = document.getElementById('productTableBody');
+        tableBody.innerHTML = '';
+        products.forEach(p => {
+            tableBody.innerHTML += `
+                <tr>
+                    <td><span class="text-muted">#${p.id}</span></td>
+                    <td class="fw-bold">${p.name}</td>
+                    <td><span class="badge bg-secondary">${p.category}</span></td>
+                    <td>${p.price} TL</td>
+                    <td><span class="status-badge">ACTIVE</span></td>
+                </tr>
+            `;
+        });
+
+        // B) Select Kutularını Doldur (Kampanya ve POS için)
+        const selects = document.querySelectorAll('.product-select');
+        selects.forEach(sel => {
+            sel.innerHTML = '<option value="">Bir ürün seçin...</option>';
+            products.forEach(p => {
+                sel.innerHTML += `<option value="${p.id}">${p.name} (${p.price} TL)</option>`;
+            });
+        });
+    }
+
+    async function addProduct() {
+        const data = {
+            name: document.getElementById('pName').value,
+            price: Number(document.getElementById('pPrice').value),
+            category: document.getElementById('pCat').value
+        };
+        if(!data.name) return alert("Ürün adı giriniz");
+
+        await fetch('/api/products', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+        
+        // Formu temizle ve listeyi yenile
+        document.getElementById('pName').value = "";
+        document.getElementById('pPrice').value = "";
+        loadProducts(); // Tablo anında güncellenir
+        // Sekme değişmesine gerek yok, zaten ürünler sekmesindeyiz
+    }
+
+    // 2. KAMPANYA YÖNETİMİ
+    async function loadCampaigns() {
+        const res = await fetch('/api/campaigns');
+        const camps = await res.json();
+        const list = document.getElementById('activeCampaigns');
+        list.innerHTML = '';
+        camps.forEach(c => list.innerHTML += `<li class="list-group-item d-flex justify-content-between align-items-center">
+            <span>🏷️ ${c.name}</span> <span class="badge bg-info text-dark">${c.type}</span>
+        </li>`);
+    }
+
+    async function addCampaign() {
+        const type = document.getElementById('cType').value;
+        let data = { name: document.getElementById('cName').value, type: type };
+
+        // Validasyon ve Veri Hazırlama
+        if(type === 'X_AL_Y_ODE') {
+            data.targetProductId = document.getElementById('targetProd1').value;
+            data.buyCount = Number(document.getElementById('buyCount').value);
+            data.payCount = Number(document.getElementById('payCount').value);
+        } else if (type === 'BUNDLE') {
+            data.category1 = document.getElementById('cat1').value;
+            data.category2 = document.getElementById('cat2').value;
+            data.discountAmount = Number(document.getElementById('bundleDiscount').value);
+        } else if (type === 'PERCENTAGE') {
+            data.targetProductId = document.getElementById('targetProd2').value;
+            data.percent = Number(document.getElementById('percentVal').value);
+        }
+
+        await fetch('/api/campaigns', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+        alert('Kampanya Kaydedildi!');
+        loadCampaigns();
+    }
+
+    // 3. POS İŞLEMLERİ
+    function addToCart() {
+        const prodId = document.getElementById('posProduct').value;
+        const qty = Number(document.getElementById('posQty').value);
+        if(!prodId) return;
+        
+        const prodText = document.getElementById('posProduct').options[document.getElementById('posProduct').selectedIndex].text;
+        cart.push({ productId: prodId, qty: qty, name: prodText });
+        renderCart();
+    }
+
+    function renderCart() {
+        const list = document.getElementById('cartList');
+        list.innerHTML = '';
+        cart.forEach((item, index) => {
+            list.innerHTML += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                ${item.qty} x ${item.name}
+                <button onclick="cart.splice(${index},1);renderCart()" class="btn btn-sm btn-outline-danger">Sil</button>
+            </li>`;
+        });
+    }
+
+    async function calculate() {
+        const res = await fetch('/api/calculate', { 
+            method: 'POST', 
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify({ items: cart }) 
+        });
+        const result = await res.json();
+
+        document.getElementById('resultArea').style.display = 'block';
+        document.getElementById('resRaw').innerText = result.rawTotal;
+        document.getElementById('resCamp').innerText = result.name;
+        document.getElementById('resDisc').innerText = result.discount;
+        document.getElementById('resFinal').innerText = result.total;
+    }
+
+    function toggleCampaignInputs() {
+        const val = document.getElementById('cType').value;
+        document.getElementById('inputs-x-al-y-ode').style.display = 'none';
+        document.getElementById('inputs-bundle').style.display = 'none';
+        document.getElementById('inputs-percentage').style.display = 'none';
+
+        if(val === 'X_AL_Y_ODE') document.getElementById('inputs-x-al-y-ode').style.display = 'block';
+        if(val === 'BUNDLE') document.getElementById('inputs-bundle').style.display = 'block';
+        if(val === 'PERCENTAGE') document.getElementById('inputs-percentage').style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
